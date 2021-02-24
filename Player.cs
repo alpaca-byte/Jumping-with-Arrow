@@ -15,6 +15,8 @@ public class Player : MonoBehaviour
 
     private bool oneTime = false;
 
+    private bool airCheck = false;
+
     private Rigidbody2D rb;
 
     private Vector3 offSetSlider = new Vector3(0, 0.75f, 0);
@@ -53,26 +55,42 @@ public class Player : MonoBehaviour
             gliderSlider.gameObject.SetActive(false);
             rb.gravityScale = 1;
         }
-        //********************************************************************
-        if (Input.GetMouseButton(0) && onGround && charge < maxChargeTime && isStop)
+
+        if (onGround && isStop)
         {
-            onCharge();
+            if (Input.GetMouseButton(0) && charge < maxChargeTime && !airCheck)
+            {
+                onCharge();
+            }
+
+            if (!Input.GetMouseButton(0))
+            {
+                airCheck = false;
+                chargeSlider.gameObject.SetActive(true);
+                arrow.SetActive(true);
+                aimMove();
+            }
+
+            else if (Input.GetMouseButton(0) && airCheck)
+            {
+                chargeSlider.gameObject.SetActive(true);
+                arrow.SetActive(true);
+                aimMove();
+            }
         }
 
-        if (!Input.GetMouseButton(0) && onGround && isStop)
+        else
         {
-            chargeSlider.gameObject.SetActive(true);
-            arrow.SetActive(true);
-            aimMove();
-        }
+            if (Input.GetMouseButton(0))
+            {
+                airCheck = true;
+            }
 
-        else if (!(onGround && isStop))
-        {
             arrow.SetActive(false);
             chargeSlider.gameObject.SetActive(false);
         }
-        //********************************************************************
-        if (Input.GetMouseButtonUp(0))
+
+        if (Input.GetMouseButtonUp(0) && !airCheck)
         {
             throwBall();
         }
@@ -80,8 +98,6 @@ public class Player : MonoBehaviour
 
     private void glide()
     {
-        Vector2 speed = rb.velocity;
-
         if (!oneTime)
         {
             rb.velocity = new Vector2(rb.velocity.x, 0);
