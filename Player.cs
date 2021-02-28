@@ -5,27 +5,26 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    private float axisX, axisY;
+    private float axisX, axisY; // Axes of x and y vector 
 
-    private float charge = 0, glideCur = 0;
+    private float charge = 0, glideCur = 0; // Current charge point and glide time
 
-    private bool onGround;
+    private bool onGround; // Is it on ground
 
-    private bool toUp = true;
+    private bool toUp = true; // Is the arrow rotating to up or down
 
-    private bool oneTime = false;
-
-    private bool airCheck = false;
+    private bool oneTime = false;  // Checking for one time reset for y vector of player
+    private bool airCheck = false; // Is the ball flying
 
     private Rigidbody2D rb;
 
-    private Vector3 offSetSlider = new Vector3(0, 0.75f, 0);
+    private Vector3 offSetSlider = new Vector3(0, 0.75f, 0); // Offset for charge slider
 
     [SerializeField] private Slider chargeSlider, gliderSlider;
 
-    [SerializeField] private Canvas chargeSliderCanvas;
+    [SerializeField] private Canvas chargeSliderCanvas; // Canvas of charge slider
 
-    [SerializeField] private GameObject arrow;
+    [SerializeField] private GameObject arrow; // Game object of rotating arrow
 
     [SerializeField] private float rotationSpeed = 135; // Arrow rotation speed
 
@@ -34,17 +33,18 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
 
-        chargeSlider.maxValue = maxChargeTime;
+        chargeSlider.maxValue = maxChargeTime; // Initializing of charge slider
 
-        gliderSlider.maxValue = glideTime;
+        gliderSlider.maxValue = glideTime; // Initializing of glider slider
     }
 
     void Update()
     {
         sliderFollow();
 
-        bool isStop = rb.velocity.magnitude == 0;
+        bool isStop = rb.velocity.magnitude == 0; // Does the ball stop
 
+        // Checking for glide conditions 
         if (Input.GetMouseButton(0) && !onGround && glideCur < glideTime)
         {
             glide();
@@ -56,8 +56,10 @@ public class Player : MonoBehaviour
             rb.gravityScale = 1;
         }
 
+        //Is it on the ground and does it stop
         if (onGround && isStop)
         {
+            //Checking for charging conditions
             if (Input.GetMouseButton(0) && charge < maxChargeTime && !airCheck)
             {
                 onCharge();
@@ -81,6 +83,7 @@ public class Player : MonoBehaviour
 
         else
         {
+            // Did player press the left click while flying
             if (Input.GetMouseButton(0))
             {
                 airCheck = true;
@@ -90,14 +93,17 @@ public class Player : MonoBehaviour
             chargeSlider.gameObject.SetActive(false);
         }
 
+        // If player releases the left click and if ball is not in the air, throw the ball
         if (Input.GetMouseButtonUp(0) && !airCheck)
         {
             throwBall();
         }
     }
 
+    // Gliding function
     private void glide()
     {
+        // Reset the 'y' vector of player once
         if (!oneTime)
         {
             rb.velocity = new Vector2(rb.velocity.x, 0);
@@ -109,19 +115,24 @@ public class Player : MonoBehaviour
         glideCur += Time.deltaTime;
 
         gliderSlider.value = glideCur;
-
+        
+        // Reduce the gravity
         rb.gravityScale = gravityScale;
     }
+    
+    // Charging function
     private void onCharge()
     {
         charge += Time.deltaTime;
         chargeSlider.value = charge;
 
+        // Charge the ball proportional to arrow position
         Vector3 arrowVector = (arrow.transform.position - transform.position).normalized;
         axisX += Time.deltaTime * chargePerSec * arrowVector.x;
         axisY += Time.deltaTime * chargePerSec * arrowVector.y;
     }
 
+    // Arrow rotation function
     private void aimMove()
     {
         glideCur = 0;
@@ -133,13 +144,14 @@ public class Player : MonoBehaviour
 
         if (angleOfArrow >= 180 && angleOfArrow <= 270) toUp = false;
 
-        else if (angleOfArrow >= 270 && angleOfArrow <= 360) toUp = true;
+        else toUp = true;
 
         if (toUp) arrow.transform.RotateAround(transform.position, Vector3.forward, rotationSpeed * Time.deltaTime);
 
         else arrow.transform.RotateAround(transform.position, Vector3.forward, -rotationSpeed * Time.deltaTime);
     }
 
+    // Throwing function
     private void throwBall()
     {
         rb.AddForce(transform.up * axisY, ForceMode2D.Impulse);
@@ -148,11 +160,14 @@ public class Player : MonoBehaviour
         axisX = 0;
         axisY = 0;
     }
+    
+    // Function for slider to follow the player
     private void sliderFollow()
     {
         chargeSliderCanvas.transform.localPosition = transform.position + offSetSlider;
     }
 
+    // Checking for is ball on the ground
     void OnTriggerStay2D(Collider2D collider)
     {
         if (collider.CompareTag("Ground"))
